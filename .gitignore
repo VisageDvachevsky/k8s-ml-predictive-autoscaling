@@ -7,6 +7,11 @@ __pycache__/
 venv/
 .env
 .env.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.cache/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -15,6 +20,8 @@ venv/
 data/raw/*
 data/processed/*
 !data/.gitkeep
+!data/raw/.gitkeep
+!data/processed/.gitkeep
 
 # Models
 models/**/*.pt
@@ -27,3 +34,6 @@ models/**/*.pkl
 .idea/
 .vscode/
 .DS_Store
+dist/
+build/
+*.egg-info/

@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # Roadmap: K8s ML Predictive Autoscaling
 
 Детальный план развития проекта по фазам с оценкой времени, зависимостями и критериями завершения.
@@ -1005,3 +1006,70 @@ docs/
 - Документирование принятых решений и trade-offs
 
 Все изменения отслеживаются через Git commits и Issues.
+=======
+# Roadmap
+
+Файл Roadmap синхронизирован с описанием в README и деталями из запроса. Каждая фаза завершает готовый инкремент и строится на предыдущих.
+
+## Phase 0 — Infrastructure & Repo Skeleton (1–2 недели)
+
+**Цель:** подготовить единый DevEx слой: зависимости, линтеры, Docker-окружение, Kubernetes-манифесты и документацию.
+
+### Выполненные задачи
+- [x] `pyproject.toml` + Poetry как единый источник зависимостей.
+- [x] Настроены `pre-commit` (black, isort, flake8, mypy, базовые sanity hooks).
+- [x] Создан демо FastAPI сервис (`src/k8s_ml_predictive_autoscaling/demo_service`).
+- [x] Dockerfile + Compose c 3 экземплярами сервиса, Prometheus и Grafana.
+- [x] Grafana provisioning (datasource + стартовый dashboard).
+- [x] Prometheus config для скрейпа demo-services.
+- [x] K8s manifests (namespace, demo Deployment/Service, Prometheus, baseline HPA, kind config).
+- [x] Документация: README, ROADMAP, CONTRIBUTING, `docs/setup-guide.md`.
+
+### Критерии Done
+- docker compose запускает демо-сервисы + Prometheus/Grafana локально.
+- /metrics собирать Prometheus, графики видны в Grafana.
+- Kind конфигурация доступна и применяются базовые манифесты.
+- CI (GitHub Actions) гоняет тесты + линтеры.
+
+## Phase 1 — Data Collection & Preprocessing (2–3 недели)
+
+**Зависимости:** Phase 0.
+
+### 1.1 Сбор данных из Prometheus
+- [x] `src/k8s_ml_predictive_autoscaling/collector/prometheus_client.py` — высокоуровневый Prometheus API клиент (prometheus_http_api или httpx + PromQL).
+- [x] `collect_historical.py` — CLI/скрипт выгрузки временных рядов в `data/raw/YYYYMMDD`. Конфигурация через YAML (`config.yaml`).
+- [x] Библиотека конфигурации метрик с поддержкой CPU, памяти, RPS, latency p50/p95/p99.
+
+### 1.2 Генерация синтетической нагрузки (опционально)
+- [x] `tools/load_generator/` с k6 и/или Locust скриптами.
+- [x] `synthetic_patterns.py` — генерация дневной/недельной сезонности + спайки.
+- [x] Интеграция с docker compose (сервис `load-generator`) и K8s Deployment (`k8s/manifests/load-generator-deployment.yaml`).
+
+### 1.3 Exploratory Data Analysis
+- [x] `notebooks/research-data.ipynb` — загрузка выгрузок, базовые визуализации и статистики (STL/аномалии добавим позже).
+- [x] Документация по итогам EDA (`docs/eda-report.md` с TODO на дальнейший анализ).
+
+### 1.4 Препроцессинг
+- [x] `src/k8s_ml_predictive_autoscaling/preprocessor/pipeline.py` — ресемплинг, заполнение пропусков, нормализация.
+- [x] `feature_engineering.py` + `anomaly_detection.py` + `config.yaml`.
+- [x] Объединённый pipeline с сохранением в `data/processed/{train,val,test}.csv` + scaler.pkl + sliding-window `.npz`.
+
+### Дополнительно (Phase 1 расширения)
+- [x] Асинхронный load generator (`k8s_ml_predictive_autoscaling.load_generator`) с Docker/K8s интеграцией.
+- [x] Sliding-window датасеты (`sequences_*.npz`) для LSTM/Seq2Seq моделей.
+
+### Критерии Done Phase 1
+- Исторические временные ряды сохранены в `data/raw` за N дней/недель.
+- Проведён EDA со статами/визуализациями/аномалиями.
+- Препроцессинг воспроизводим, с разделением на train/val/test и сохранёнными scaler-объектами.
+- Документация по формату данных и признакам добавлена в README/docs.
+
+## Phase 2+ (high level)
+- Phase 2 — базовые модели Prophet/LSTM + сравнение (accuracy, latency, затраты).
+- Phase 3 — гибрид Prophet+LSTM, экспорт в ONNX.
+- Phase 4 — онлайн inference (FastAPI + ONNX Runtime).
+- Phase 5 — Resource Planner и интеграция с K8s (HPA/KEDA).
+- Phase 6 — Grafana dashboards, метрики эффективности, alerting.
+- Phase 7 — нагрузочные эксперименты, отчётность, публикация.
+- Phase 8 — исследование RL-подходов (опционально).
+>>>>>>> Stashed changes

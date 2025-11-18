@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+  demo-service-a:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.demo-service
+    environment:
+      AUTOSCALER_SERVICE_NAME: demo-service-a
+    ports:
+      - "8001:8000"
+    networks:
+      - observability
+
+  demo-service-b:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.demo-service
+    environment:
+      AUTOSCALER_SERVICE_NAME: demo-service-b
+    ports:
+      - "8002:8000"
+    networks:
+      - observability
+
+  demo-service-c:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.demo-service
+    environment:
+      AUTOSCALER_SERVICE_NAME: demo-service-c
+    ports:
+      - "8003:8000"
+    networks:
+      - observability
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - observability
+    depends_on:
+      - demo-service-a
+      - demo-service-b
+      - demo-service-c
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - observability
+    depends_on:
+      - prometheus
+
+  load-generator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.demo-service
+    command:
+      [
+        "python",
+        "-m",
+        "k8s_ml_predictive_autoscaling.load_generator",
+        "--targets",
+        "http://demo-service-a:8000",
+        "http://demo-service-b:8000",
+        "http://demo-service-c:8000",
+        "--interval",
+        "1.0",
+        "--minutes",
+        "180",
+      ]
+    depends_on:
+      - demo-service-a
+      - demo-service-b
+      - demo-service-c
+    networks:
+      - observability
+
+networks:
+  observability:
+    driver: bridge

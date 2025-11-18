@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    env:
+      POETRY_VIRTUALENVS_IN_PROJECT: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: pip install --upgrade "poetry==1.8.3"
+
+      - name: Cache virtualenv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: v1-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-ansi
+
+      - name: Run linters
+        run: |
+          poetry run black --check .
+          poetry run isort --check-only .
+          poetry run flake8
+          poetry run mypy .
+
+      - name: Run tests
+        run: poetry run pytest --maxfail=1 --disable-warnings

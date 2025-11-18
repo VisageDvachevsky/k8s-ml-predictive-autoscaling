@@ -1,0 +1,28 @@
+input_glob: data/raw/*.csv
+output_dir: data/processed
+metrics:
+  - cpu_metrics
+  - memory_metrics
+  - request_rate
+scaler_features:
+  - cpu_metrics
+  - memory_metrics
+  - request_rate
+resample_rule: 1min
+interpolation_method: time
+features:
+  enable_time_features: true
+  lags: [1, 5, 15]
+  rolling_windows: [3, 5]
+anomaly:
+  enabled: true
+  zscore_threshold: 3.0
+sliding_window:
+  sequence_length: 30
+  forecast_steps: [5, 15, 30]
+  stride: 1
+  target_metric: cpu_metrics
+splits:
+  train: 0.7
+  validation: 0.15
+  test: 0.15

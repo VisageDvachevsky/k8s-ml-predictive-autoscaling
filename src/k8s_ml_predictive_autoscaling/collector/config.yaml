@@ -1,0 +1,22 @@
+prometheus:
+  base_url: http://localhost:9090
+  timeout_seconds: 15
+  verify_ssl: false
+
+collection:
+  output_dir: data/raw
+  lookback_hours: 24
+  chunk_hours: 4
+  default_step: 30s
+
+metrics:
+  - name: cpu_metrics
+    promql: rate(container_cpu_usage_seconds_total{namespace="predictive-autoscaling"}[5m])
+    output_prefix: cpu_metrics
+    step: 30s
+  - name: memory_metrics
+    promql: container_memory_working_set_bytes{namespace="predictive-autoscaling"}
+    output_prefix: memory_metrics
+  - name: request_rate
+    promql: rate(demo_service_requests_total{job="demo-services"}[1m])
+    output_prefix: request_rate

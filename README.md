@@ -277,56 +277,105 @@ docs/
 
 ---
 
+<<<<<<< Updated upstream:README.md
 ## 8. Быстрый старт (план)
+=======
+## 7. Быстрый старт
+>>>>>>> Stashed changes:Readme.md
 
-Конкретные команды будут добавлены по мере реализации. Примерный сценарий:
-
-1. Клонировать репозиторий:
+1. **Клонирование и зависимость**
    ```bash
-   git clone https://github.com/USERNAME/k8s-ml-predictive-autoscaling.git
+   git clone https://github.com/VisageDvachevsky/k8s-ml-predictive-autoscaling.git
    cd k8s-ml-predictive-autoscaling
+   poetry install
+   poetry run pre-commit install
    ```
 
-2. Создать и активировать виртуальное окружение / установить зависимости:
+2. **Тесты и линтеры**
    ```bash
-   # TODO: будет добавлен requirements.txt или pyproject.toml
-   pip install -r requirements.txt
+   poetry run pytest
+   poetry run mypy .
+   poetry run flake8
    ```
 
-3. Поднять демо-окружение:
+3. **Локальная наблюдаемость через Docker Compose**
    ```bash
-   # TODO: docker-compose для Prometheus, Grafana и демо-сервисов
-   docker compose up -d
+   cd docker
+   docker compose up --build -d
    ```
+   Доступы:
+   * Demo FastAPI сервисы — http://localhost:8001..8003
+   * Prometheus — http://localhost:9090
+   * Grafana — http://localhost:3000 (admin/admin, dashboard provisioning включён)
+   * `load-generator` автоматически прогоняет синтетическую нагрузку по `/workload`
 
-4. Собрать данные из Prometheus:
+4. **Kubernetes (kind/minikube)**
    ```bash
-   python -m src.collector.run
+   kind create cluster --config k8s/kind-config.yaml --name autoscaling
+   kubectl apply -f k8s/manifests/namespace.yaml
+   kubectl apply -f k8s/manifests/demo-service-deployment.yaml
+   kubectl apply -f k8s/manifests/demo-service-service.yaml
+   kubectl apply -f k8s/manifests/prometheus/
+   kubectl apply -f k8s/manifests/hpa/baseline-hpa.yaml
+   kubectl apply -f k8s/manifests/load-generator-deployment.yaml
    ```
 
-5. Запустить препроцессинг и обучение базовых моделей (Prophet / LSTM):
-   ```bash
-   python -m src.preprocessor.run
-   python -m models.prophet.train
-   python -m models.lstm.train
-   ```
-
-6. Запустить сервис инференса и планировщик:
-   ```bash
-   uvicorn src.predictor.app:app --reload
-   uvicorn src.planner.app:app --reload
-   ```
-
-7. Включить интеграцию с Kubernetes:
-   ```bash
-   # применение манифестов будет описано в k8s/manifests/
-   kubectl apply -f k8s/manifests/
-   ```
-
-Подробный, пошаговый гайд будет добавлен после реализации Phase 0–2 (см. ROADMAP.md).
+5. **Дальнейшие шаги**
+   * Сбор и препроцессинг данных: см. `ROADMAP.md`, Phase 1.
+   * Полный гайд с лайфхаками — `docs/setup-guide.md`.
 
 ---
 
+<<<<<<< Updated upstream:README.md
+=======
+## 8. Phase 1 — Сбор исторических данных
+
+### Экспорт метрик из Prometheus
+
+1. Сконфигурируйте `src/k8s_ml_predictive_autoscaling/collector/config.yaml`:
+   * `prometheus.base_url` — адрес локального/удалённого Prometheus.
+   * `collection.lookback_hours`, `chunk_hours`, `default_step`.
+   * `metrics[]` — список PromQL запросов и префиксов файлов.
+2. Запустите экспорт:
+   ```bash
+   poetry run python -m k8s_ml_predictive_autoscaling.collector.collect_historical \\
+     --config src/k8s_ml_predictive_autoscaling/collector/config.yaml
+   ```
+   Файлы появятся в `data/raw/cpu_metrics_YYYYMMDD.csv` и т.п. Каждая запись включает timestamp, PromQL и JSON-метки.
+
+### Генерация синтетической нагрузки
+
+* `tools/load_generator/synthetic_patterns.py` — генератор профилей нагрузки (дневные/недельные циклы + спайки).
+* `tools/load_generator/locust_tasks.py` — сценарий Locust для `/workload`/`/health`.
+  ```bash
+  poetry run locust -f tools/load_generator/locust_tasks.py --host http://localhost:8001
+  ```
+* `tools/load_generator/k6_script.js` — k6-скрипт для быстрой CLI-нагрузки.
+* Docker Compose сервис `load-generator` + K8s Deployment `k8s/manifests/load-generator-deployment.yaml` автоматически создают фоновую нагрузку.
+
+Используйте эти инструменты для синтетических данных (Phase 1.2) и сценариев в Kubernetes/Docker Compose.
+
+### Препроцессинг и генерация датасетов
+
+1. Обновите `src/k8s_ml_predictive_autoscaling/preprocessor/config.yaml` (метрики, лаги, горизонты).
+2. Запустите пайплайн:
+   ```bash
+   poetry run python -m k8s_ml_predictive_autoscaling.preprocessor.pipeline \
+     --config src/k8s_ml_predictive_autoscaling/preprocessor/config.yaml
+   ```
+3. На выходе появятся:
+   * `data/processed/train.csv`, `validation.csv`, `test.csv`.
+   * Sliding-window последовательности (`sequences_*.npz`) для LSTM/Seq2Seq.
+   * Сохранённый `scaler.pkl`.
+
+### EDA и отчёты
+
+* `notebooks/research-data.ipynb` — быстрый ноутбук для визуализации.
+* `docs/eda-report.md` — конспект ключевых наблюдений и TODO для аналитики.
+
+---
+
+>>>>>>> Stashed changes:Readme.md
 ## 9. Roadmap
 
 Подробный план развития проекта вынесен в отдельный файл `ROADMAP.md`. Кратко по фазам:
@@ -341,7 +390,6 @@ docs/
 * **Phase 7** — нагрузочные эксперименты и оформление научных результатов.
 * **Phase 8** — (опционально) RL-подход к автомасштабированию.
 
----
 
 ## 10. Статус
 
@@ -356,7 +404,6 @@ docs/
 
 Дальнейшие шаги и прогресс см. в `ROADMAP.md` и в разделе Issues/Projects репозитория (будет заведено по мере разработки).
 
----
 
 ## 11. Обратная связь и вклад
 
