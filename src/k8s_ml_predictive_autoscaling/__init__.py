@@ -2,7 +2,6 @@
 
 from importlib import metadata
 
-
 __all__ = ["__version__"]
 
 

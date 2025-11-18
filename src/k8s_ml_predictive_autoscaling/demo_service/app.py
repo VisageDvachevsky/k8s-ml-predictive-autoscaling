@@ -8,8 +8,8 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, status
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from pydantic import BaseModel
 
 from ..logging import get_logger, log_structured
 from ..metrics import ACTIVE_JOBS, REQUEST_COUNTER, REQUEST_LATENCY

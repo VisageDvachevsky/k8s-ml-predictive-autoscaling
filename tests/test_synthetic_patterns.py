@@ -1,10 +1,6 @@
 """Tests for synthetic load pattern helpers."""
 
-from k8s_ml_predictive_autoscaling.synthetic import (
-    PatternConfig,
-    generate_profile,
-    windowed,
-)
+from k8s_ml_predictive_autoscaling.synthetic import PatternConfig, generate_profile, windowed
 
 
 def test_generate_profile_has_expected_length() -> None:

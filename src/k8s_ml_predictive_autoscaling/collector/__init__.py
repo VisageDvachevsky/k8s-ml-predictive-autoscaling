@@ -3,8 +3,8 @@
 from .collect_historical import HistoricalCollector
 from .config import (
     DEFAULT_CONFIG_PATH,
-    CollectorConfig,
     CollectionSettings,
+    CollectorConfig,
     MetricConfig,
     PrometheusSettings,
     load_config,

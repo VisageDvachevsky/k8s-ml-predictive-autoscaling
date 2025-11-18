@@ -113,11 +113,7 @@ class PreprocessingPipeline:
     def _determine_scaler_features(self, frame: pd.DataFrame) -> list[str]:
         if self.config.scaler_features:
             return [col for col in self.config.scaler_features if col in frame.columns]
-        return [
-            col
-            for col in self.config.metrics
-            if col in frame.columns
-        ]
+        return [col for col in self.config.metrics if col in frame.columns]
 
     def _split(self, frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
         if abs(self.config.splits.total - 1.0) > 1e-6:

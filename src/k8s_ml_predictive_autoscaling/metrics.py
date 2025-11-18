@@ -2,7 +2,6 @@
 
 from prometheus_client import Counter, Gauge, Histogram
 
-
 REQUEST_LATENCY = Histogram(
     "demo_service_request_latency_seconds",
     "Latency of synthetic operations in the demo service.",

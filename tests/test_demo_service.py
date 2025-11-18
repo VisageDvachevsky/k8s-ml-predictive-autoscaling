@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 
 from k8s_ml_predictive_autoscaling.demo_service.app import app
 
-
 client = TestClient(app)
 
 
