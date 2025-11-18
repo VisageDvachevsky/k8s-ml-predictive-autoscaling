@@ -158,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     config = load_config(args.config)
     if args.base_url:
-        config.prometheus = config.prometheus.model_copy(update={\"base_url\": args.base_url})
+        config.prometheus = config.prometheus.model_copy(update={"base_url": args.base_url})
 
     client = PrometheusClient(
         config.prometheus.base_url,

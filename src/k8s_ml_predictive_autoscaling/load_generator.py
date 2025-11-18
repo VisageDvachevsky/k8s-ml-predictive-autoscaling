@@ -78,9 +78,24 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
         help="List of service base URLs to hit (e.g. http://demo-service-a:8000)",
     )
-    parser.add_argument("--interval", type=float, default=1.0, help="Delay between batches in seconds")
-    parser.add_argument("--minutes", type=int, default=60, help="Profile length in minutes")
-    parser.add_argument("--seed", type=int, default=42, help="Random seed for deterministic profile")
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=1.0,
+        help="Delay between batches in seconds",
+    )
+    parser.add_argument(
+        "--minutes",
+        type=int,
+        default=60,
+        help="Profile length in minutes",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Random seed for deterministic profile",
+    )
     return parser
 
 
@@ -106,7 +121,10 @@ async def _run_async(targets: list[str], interval: float, minutes: int, seed: in
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    LOGGER.info("Starting load generator", extra={"targets": args.targets})
+    LOGGER.info(
+        "Starting load generator",
+        extra={"targets": args.targets},
+    )
     asyncio.run(_run_async(args.targets, args.interval, args.minutes, args.seed))
     return 0
 

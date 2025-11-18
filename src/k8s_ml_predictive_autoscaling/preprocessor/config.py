@@ -55,7 +55,13 @@ class PreprocessorConfig(BaseModel):
     resample_rule: str = Field(default="1min")
     interpolation_method: str = Field(default="time")
     scaler_features: list[str] = Field(default_factory=list)
-    metrics: list[str] = Field(default_factory=lambda: ["cpu_metrics", "memory_metrics", "request_rate"])
+    metrics: list[str] = Field(
+        default_factory=lambda: [
+            "cpu_metrics",
+            "memory_metrics",
+            "request_rate",
+        ]
+    )
     features: FeatureConfig = Field(default_factory=FeatureConfig)
     anomaly: AnomalyConfig = Field(default_factory=AnomalyConfig)
     sliding_window: SlidingWindowConfig = Field(default_factory=SlidingWindowConfig)
@@ -75,4 +81,12 @@ def load_config(path: Path | None = None) -> PreprocessorConfig:
     return PreprocessorConfig.model_validate(data)
 
 
-__all__ = ["PreprocessorConfig", "FeatureConfig", "AnomalyConfig", "SlidingWindowConfig", "DatasetSplitConfig", "DEFAULT_CONFIG_PATH", "load_config"]
+__all__ = [
+    "PreprocessorConfig",
+    "FeatureConfig",
+    "AnomalyConfig",
+    "SlidingWindowConfig",
+    "DatasetSplitConfig",
+    "DEFAULT_CONFIG_PATH",
+    "load_config",
+]

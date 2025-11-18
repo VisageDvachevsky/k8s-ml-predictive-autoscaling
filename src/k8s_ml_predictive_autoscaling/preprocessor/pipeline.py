@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+from pathlib import Path
 
 import joblib
 import numpy as np
@@ -30,7 +31,11 @@ class PreprocessingPipeline:
         frame = self._load_raw()
         frame = self._resample(frame)
         if self.config.anomaly.enabled:
-            frame = filter_zscore(frame, self.config.metrics, self.config.anomaly.zscore_threshold)
+            frame = filter_zscore(
+                frame,
+                self.config.metrics,
+                self.config.anomaly.zscore_threshold,
+            )
         frame = self._engineer_features(frame)
         dataset = self._build_targets(frame)
         dataset = dataset.dropna()
@@ -42,7 +47,10 @@ class PreprocessingPipeline:
         scaler_path = self.config.output_dir / "scaler.pkl"
         joblib.dump(self.scaler, scaler_path)
         outputs["scaler"] = scaler_path
-        LOGGER.info("Preprocessing finished", extra={"outputs": {k: str(v) for k, v in outputs.items()}})
+        LOGGER.info(
+            "Preprocessing finished",
+            extra={"outputs": {k: str(v) for k, v in outputs.items()}},
+        )
         return outputs
 
     def _load_raw(self) -> pd.DataFrame:
@@ -52,7 +60,13 @@ class PreprocessingPipeline:
         frames = []
         for path in files:
             df = pd.read_csv(path, parse_dates=[self.config.timestamp_column])
-            df = df[[self.config.timestamp_column, self.config.metric_column, self.config.value_column]]
+            df = df[
+                [
+                    self.config.timestamp_column,
+                    self.config.metric_column,
+                    self.config.value_column,
+                ]
+            ]
             df = df[df[self.config.metric_column].isin(self.config.metrics)]
             frames.append(df)
         combined = pd.concat(frames, ignore_index=True)
@@ -77,7 +91,11 @@ class PreprocessingPipeline:
         enriched = frame.copy()
         if self.config.features.enable_time_features:
             enriched = add_time_features(enriched)
-        enriched = add_lag_features(enriched, self.config.metrics, self.config.features.lags)
+        enriched = add_lag_features(
+            enriched,
+            self.config.metrics,
+            self.config.features.lags,
+        )
         enriched = add_rolling_features(
             enriched, self.config.metrics, self.config.features.rolling_windows
         )
@@ -87,13 +105,19 @@ class PreprocessingPipeline:
         enriched = frame.copy()
         target_metric = self.config.sliding_window.target_metric
         for horizon in self.config.sliding_window.forecast_steps:
-            enriched[f"target_{target_metric}_t+{horizon}"] = enriched[target_metric].shift(-horizon)
+            enriched[f"target_{target_metric}_t+{horizon}"] = enriched[target_metric].shift(
+                -horizon
+            )
         return enriched
 
     def _determine_scaler_features(self, frame: pd.DataFrame) -> list[str]:
         if self.config.scaler_features:
             return [col for col in self.config.scaler_features if col in frame.columns]
-        return [col for col in self.config.metrics if col in frame.columns]
+        return [
+            col
+            for col in self.config.metrics
+            if col in frame.columns
+        ]
 
     def _split(self, frame: pd.DataFrame) -> dict[str, pd.DataFrame]:
         if abs(self.config.splits.total - 1.0) > 1e-6:
@@ -123,7 +147,10 @@ class PreprocessingPipeline:
         outputs: dict[str, Path] = {}
         target_cols = [c for c in dataset.columns if c.startswith("target_")]
         feature_cols = [c for c in dataset.columns if c not in target_cols]
-        main_target = f"target_{self.config.sliding_window.target_metric}_t+{self.config.sliding_window.forecast_steps[0]}"
+        main_target = (
+            f"target_{self.config.sliding_window.target_metric}_t+"
+            f"{self.config.sliding_window.forecast_steps[0]}"
+        )
         for name, data in splits.items():
             sequences, targets, timestamps = build_sequences(
                 data,
