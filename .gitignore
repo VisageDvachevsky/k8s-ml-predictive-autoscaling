@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data
+data/raw/*
+data/processed/*
+!data/.gitkeep
+
+# Models
+models/**/*.pt
+models/**/*.pth
+models/**/*.onnx
+models/**/*.joblib
+models/**/*.pkl
+
+# Misc
+.idea/
+.vscode/
+.DS_Store
