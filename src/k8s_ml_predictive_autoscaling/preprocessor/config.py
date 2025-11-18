@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, Field, PositiveInt, field_validator
@@ -53,7 +53,7 @@ class PreprocessorConfig(BaseModel):
     value_column: str = Field(default="value")
     output_dir: Path = Field(default=Path("data/processed"))
     resample_rule: str = Field(default="1min")
-    interpolation_method: str = Field(default="time")
+    interpolation_method: InterpolationMethod = Field(default="time")
     scaler_features: list[str] = Field(default_factory=list)
     metrics: list[str] = Field(
         default_factory=lambda: [
@@ -88,5 +88,26 @@ __all__ = [
     "SlidingWindowConfig",
     "DatasetSplitConfig",
     "DEFAULT_CONFIG_PATH",
+    "InterpolationMethod",
     "load_config",
+]
+InterpolationMethod = Literal[
+    "linear",
+    "time",
+    "index",
+    "values",
+    "nearest",
+    "zero",
+    "slinear",
+    "quadratic",
+    "cubic",
+    "barycentric",
+    "polynomial",
+    "krogh",
+    "piecewise_polynomial",
+    "spline",
+    "pchip",
+    "akima",
+    "cubicspline",
+    "from_derivatives",
 ]

@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import random
 import time
-from typing import Annotated
 
-from fastapi import Depends, FastAPI, status
+from fastapi import FastAPI, status
 from fastapi.responses import PlainTextResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel
@@ -60,9 +59,9 @@ def create_app(settings: Settings) -> FastAPI:
     return app
 
 
-def get_app(settings: Annotated[Settings, Depends(get_settings)] = None) -> FastAPI:
-    settings = settings or get_settings()
-    return create_app(settings)
+def get_app(settings: Settings | None = None) -> FastAPI:
+    resolved = settings or get_settings()
+    return create_app(resolved)
 
 
 app = create_app(get_settings())

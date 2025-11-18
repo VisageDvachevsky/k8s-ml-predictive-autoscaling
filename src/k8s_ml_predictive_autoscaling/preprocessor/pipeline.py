@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 
 from ..logging import get_logger
 from .anomaly_detection import filter_zscore
-from .config import PreprocessorConfig, load_config
+from .config import InterpolationMethod, PreprocessorConfig, load_config
 from .feature_engineering import add_lag_features, add_rolling_features, add_time_features
 
 LOGGER = get_logger(__name__)
@@ -73,7 +73,6 @@ class PreprocessingPipeline:
         combined.sort_values(by=self.config.timestamp_column, inplace=True)
         combined.set_index(self.config.timestamp_column, inplace=True)
         pivot = combined.pivot_table(
-            index=combined.index,
             columns=self.config.metric_column,
             values=self.config.value_column,
         )
@@ -83,8 +82,10 @@ class PreprocessingPipeline:
 
     def _resample(self, frame: pd.DataFrame) -> pd.DataFrame:
         resampled = frame.resample(self.config.resample_rule).mean()
-        resampled = resampled.interpolate(method=self.config.interpolation_method)
-        resampled = resampled.ffill().bfill()
+        method: InterpolationMethod = self.config.interpolation_method
+        resampled = resampled.interpolate(method=method)
+        resampled = resampled.ffill()
+        resampled = resampled.bfill()
         return resampled
 
     def _engineer_features(self, frame: pd.DataFrame) -> pd.DataFrame:

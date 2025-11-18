@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
 from k8s_ml_predictive_autoscaling.load_generator import payload_stream

@@ -5,14 +5,12 @@ from __future__ import annotations
 import argparse
 import asyncio
 import itertools
-import json
 import signal
 from collections.abc import AsyncIterator
 
 import httpx
 
 from .logging import get_logger, log_structured
-from .settings import get_settings
 from .synthetic import PatternConfig, generate_profile
 
 LOGGER = get_logger(__name__)

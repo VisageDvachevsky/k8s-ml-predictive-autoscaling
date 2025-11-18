@@ -73,7 +73,7 @@ def test_collector_persists_samples(tmp_path: Path) -> None:
 
 
 def test_collect_invokes_prometheus_with_chunks(tmp_path: Path) -> None:
-    payload = []
+    payload: list[dict[str, Any]] = []
     client = StubPrometheusClient(payload)
     config = config_for_tests(tmp_path)
     collector = HistoricalCollector(config, client)  # type: ignore[arg-type]

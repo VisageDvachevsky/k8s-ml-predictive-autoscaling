@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from typing import Any, Iterable
+from typing import Any, cast
 
 import httpx
 
@@ -53,10 +53,12 @@ class PrometheusClient:
         LOGGER.debug("Prometheus query", extra={"query": query, "params": params})
         response = self._client.get("/api/v1/query_range", params=params)
         response.raise_for_status()
-        payload = response.json()
+        payload = cast(dict[str, Any], response.json())
         if payload.get("status") != "success":  # pragma: no cover - defensive
             raise PrometheusQueryError(payload.get("error", "unknown error"))
-        return payload["data"]["result"]
+        data = cast(dict[str, Any], payload.get("data", {}))
+        result = cast(list[dict[str, Any]], data.get("result", []))
+        return result
 
     def close(self) -> None:
         if self._owns_client:

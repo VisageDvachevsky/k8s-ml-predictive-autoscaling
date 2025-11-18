@@ -32,6 +32,8 @@ flake8 = "^7.0.0"
 mypy = "^1.10.0"
 isort = "^5.13.0"
 types-requests = "^2.32.0"
+pandas-stubs = "^2.1.0.240807"
+types-PyYAML = "^6.0.12.20240917"
 locust = "^2.30.0"
 matplotlib = "^3.8.0"
 seaborn = "^0.13.0"
@@ -62,6 +64,10 @@ ignore_missing_imports = false
 strict_optional = true
 mypy_path = "src"
 packages = ["k8s_ml_predictive_autoscaling"]
+
+[[tool.mypy.overrides]]
+module = ["joblib", "sklearn.*"]
+ignore_missing_imports = true
 
 [tool.coverage.run]
 branch = true

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import pandas as pd
 
 
@@ -16,10 +18,11 @@ def add_time_features(frame: pd.DataFrame) -> pd.DataFrame:
     """
 
     enriched = frame.copy()
-    enriched["hour"] = enriched.index.hour
-    enriched["day_of_week"] = enriched.index.dayofweek
+    dt_index = cast(pd.DatetimeIndex, enriched.index)
+    enriched["hour"] = dt_index.hour
+    enriched["day_of_week"] = dt_index.dayofweek
     enriched["is_weekend"] = (enriched["day_of_week"] >= 5).astype(int)
-    enriched["minute_of_day"] = enriched.index.hour * 60 + enriched.index.minute
+    enriched["minute_of_day"] = dt_index.hour * 60 + dt_index.minute
     return enriched
 
 
