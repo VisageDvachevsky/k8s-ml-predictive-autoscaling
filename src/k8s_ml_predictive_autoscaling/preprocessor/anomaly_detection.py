@@ -20,7 +20,9 @@ def filter_zscore(frame: pd.DataFrame, columns: list[str], threshold: float) -> 
     if not columns:
         return frame
     subset = frame[columns]
-    standardized = (subset - subset.mean()) / subset.std(ddof=0)
+    std = subset.std(ddof=0).replace(0, 1.0)
+    standardized = (subset - subset.mean()) / std
+    standardized = standardized.fillna(0.0)
     mask = (standardized.abs() <= threshold).all(axis=1)
     return frame.loc[mask]
 

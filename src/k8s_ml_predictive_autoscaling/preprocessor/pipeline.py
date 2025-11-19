@@ -70,13 +70,16 @@ class PreprocessingPipeline:
             df = df[df[self.config.metric_column].isin(self.config.metrics)]
             frames.append(df)
         combined = pd.concat(frames, ignore_index=True)
+        combined[self.config.timestamp_column] = pd.to_datetime(
+            combined[self.config.timestamp_column],
+            utc=True,
+        )
         combined.sort_values(by=self.config.timestamp_column, inplace=True)
-        combined.set_index(self.config.timestamp_column, inplace=True)
         pivot = combined.pivot_table(
+            index=self.config.timestamp_column,
             columns=self.config.metric_column,
             values=self.config.value_column,
         )
-        pivot.index = pd.to_datetime(pivot.index, utc=True)
         pivot = pivot.sort_index()
         return pivot
 
