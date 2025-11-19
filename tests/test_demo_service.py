@@ -9,14 +9,18 @@ from typing import Any
 import pytest
 from fastapi import HTTPException
 from fastapi.routing import APIRoute
+from pydantic import SecretStr
 
 os.environ.setdefault("AUTOSCALER_API_TOKEN", "unit-test-token")
 
-from k8s_ml_predictive_autoscaling.demo_service.app import SyntheticWorkload  # noqa: E402
-from k8s_ml_predictive_autoscaling.demo_service.app import create_app  # noqa: E402
+from k8s_ml_predictive_autoscaling.demo_service.app import (  # noqa: E402
+    SyntheticWorkload,
+    create_app,
+)
 from k8s_ml_predictive_autoscaling.settings import Settings  # noqa: E402
 
-SETTINGS = Settings(api_token="unit-test-token")
+SECRET_TOKEN = SecretStr("unit-test-token")
+SETTINGS = Settings(api_token=SECRET_TOKEN)
 APP = create_app(SETTINGS)
 
 
@@ -48,7 +52,7 @@ def test_workload_endpoint_requires_api_key() -> None:
 
 def test_workload_endpoint_accepts_valid_api_key() -> None:
     handler = _get_endpoint("/workload")
-    token = SETTINGS.api_token.get_secret_value()
+    token = SECRET_TOKEN.get_secret_value()
     response = handler(
         SyntheticWorkload(payload_size=64, cpu_hint=0.05),
         api_key=token,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any
 
 import httpx
@@ -11,14 +12,30 @@ from k8s_ml_predictive_autoscaling.load_generator import _post_with_retry, paylo
 from k8s_ml_predictive_autoscaling.synthetic import PatternConfig, generate_profile
 
 
-class DummyAsyncClient:
+class DummyAsyncClient(httpx.AsyncClient):
     """Minimal AsyncClient stub for retry unit tests."""
 
-    def __init__(self, responses: list[httpx.Response | Exception]) -> None:
-        self._responses = responses
+    def __init__(self, responses: Sequence[httpx.Response | Exception]) -> None:
+        super().__init__()
+        self._responses = list(responses)
         self.calls = 0
 
-    async def post(self, url: str, json: dict[str, Any]) -> httpx.Response:
+    async def post(  # type: ignore[override]
+        self,
+        url: httpx.URL | str,
+        *,
+        content: Any = None,
+        data: Any = None,
+        files: Any = None,
+        json: Any = None,
+        params: Any = None,
+        headers: Any = None,
+        cookies: Any = None,
+        auth: Any = None,
+        follow_redirects: Any = None,
+        timeout: Any = None,
+        extensions: Any = None,
+    ) -> httpx.Response:
         self.calls += 1
         result = self._responses.pop(0)
         if isinstance(result, Exception):
@@ -42,7 +59,7 @@ async def test_payload_stream_cycles_values() -> None:
 
 @pytest.mark.asyncio
 async def test_post_with_retry_eventually_succeeds() -> None:
-    responses = [
+    responses: Sequence[httpx.Response | Exception] = [
         httpx.HTTPError("boom"),
         httpx.Response(status_code=202),
     ]
@@ -61,7 +78,7 @@ async def test_post_with_retry_eventually_succeeds() -> None:
 
 @pytest.mark.asyncio
 async def test_post_with_retry_returns_none_after_exhaustion() -> None:
-    responses = [
+    responses: Sequence[httpx.Response | Exception] = [
         httpx.HTTPError("boom"),
         httpx.HTTPError("boom-again"),
     ]
