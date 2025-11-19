@@ -218,9 +218,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     api_key = args.api_key or os.getenv("AUTOSCALER_API_TOKEN")
     if not api_key:
-        raise SystemExit(
-            "API key is required. Provide --api-key or export AUTOSCALER_API_TOKEN."
-        )
+        raise SystemExit("API key is required. Provide --api-key or export AUTOSCALER_API_TOKEN.")
     LOGGER.info(
         "Starting load generator",
         extra={"targets": args.targets},
