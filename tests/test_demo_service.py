@@ -7,13 +7,13 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
-from fastapi.routing import APIRoute
 from fastapi import HTTPException
+from fastapi.routing import APIRoute
 
 os.environ.setdefault("AUTOSCALER_API_TOKEN", "unit-test-token")
 
-from k8s_ml_predictive_autoscaling.demo_service.app import create_app  # noqa: E402
 from k8s_ml_predictive_autoscaling.demo_service.app import SyntheticWorkload  # noqa: E402
+from k8s_ml_predictive_autoscaling.demo_service.app import create_app  # noqa: E402
 from k8s_ml_predictive_autoscaling.settings import Settings  # noqa: E402
 
 SETTINGS = Settings(api_token="unit-test-token")

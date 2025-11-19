@@ -7,10 +7,7 @@ from typing import Any
 import httpx
 import pytest
 
-from k8s_ml_predictive_autoscaling.load_generator import (
-    _post_with_retry,
-    payload_stream,
-)
+from k8s_ml_predictive_autoscaling.load_generator import _post_with_retry, payload_stream
 from k8s_ml_predictive_autoscaling.synthetic import PatternConfig, generate_profile
 
 
