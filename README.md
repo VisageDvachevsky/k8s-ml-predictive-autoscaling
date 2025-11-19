@@ -277,11 +277,7 @@ docs/
 
 ---
 
-<<<<<<< Updated upstream:README.md
-## 8. Быстрый старт (план)
-=======
-## 7. Быстрый старт
->>>>>>> Stashed changes:Readme.md
+## 8. Быстрый старт
 
 1. **Клонирование и зависимость**
    ```bash
@@ -301,6 +297,8 @@ docs/
 3. **Локальная наблюдаемость через Docker Compose**
    ```bash
    cd docker
+   cp ../.env.example ../.env  # заполните токены
+   export AUTOSCALER_API_TOKEN="strong-token"
    docker compose up --build -d
    ```
    Доступы:
@@ -313,6 +311,9 @@ docs/
    ```bash
    kind create cluster --config k8s/kind-config.yaml --name autoscaling
    kubectl apply -f k8s/manifests/namespace.yaml
+   kubectl create secret generic demo-service-credentials \
+     --namespace predictive-autoscaling \
+     --from-literal=api-token=<strong-token>
    kubectl apply -f k8s/manifests/demo-service-deployment.yaml
    kubectl apply -f k8s/manifests/demo-service-service.yaml
    kubectl apply -f k8s/manifests/prometheus/
@@ -324,11 +325,16 @@ docs/
    * Сбор и препроцессинг данных: см. `ROADMAP.md`, Phase 1.
    * Полный гайд с лайфхаками — `docs/setup-guide.md`.
 
+### Требования безопасности демо-окружения
+
+* Всегда задавайте `AUTOSCALER_API_TOKEN` (через `.env` или секреты) перед запуском demo-service и load-generator.
+* Grafana админ-пароль берётся из переменной `GF_SECURITY_ADMIN_PASSWORD`; образец лежит в `.env.example`.
+* Для Kubernetes создайте `demo-service-credentials` Secret с тем же токеном — он автоматически монтируется в Deployments.
+* При необходимости укажите собственный заголовок через `AUTOSCALER_API_KEY_HEADER` (по умолчанию `X-API-Key`).
+
 ---
 
-<<<<<<< Updated upstream:README.md
-=======
-## 8. Phase 1 — Сбор исторических данных
+## 9. Phase 1 — Сбор исторических данных
 
 ### Экспорт метрик из Prometheus
 
@@ -352,6 +358,9 @@ docs/
   ```
 * `tools/load_generator/k6_script.js` — k6-скрипт для быстрой CLI-нагрузки.
 * Docker Compose сервис `load-generator` + K8s Deployment `k8s/manifests/load-generator-deployment.yaml` автоматически создают фоновую нагрузку.
+* CLI `k8s_ml_predictive_autoscaling.load_generator` теперь требует `AUTOSCALER_API_TOKEN` (или `--api-key`) и поддерживает `--retries/--retry-backoff` для безопасных повторов.
+
+> Если вы запускаете окружение в Docker Compose, в метриках Prometheus не будет метки `namespace`. Обновите `src/k8s_ml_predictive_autoscaling/collector/config.yaml` (селекторы `namespace`/`job`) под вашу конфигурацию, иначе коллекция вернёт 0 рядов, а препроцессинг завершится ошибкой из-за отсутствия `cpu_metrics`/`memory_metrics`.
 
 Используйте эти инструменты для синтетических данных (Phase 1.2) и сценариев в Kubernetes/Docker Compose.
 
@@ -375,8 +384,7 @@ docs/
 
 ---
 
->>>>>>> Stashed changes:Readme.md
-## 9. Roadmap
+## 10. Roadmap
 
 Подробный план развития проекта вынесен в отдельный файл `ROADMAP.md`. Кратко по фазам:
 
@@ -391,7 +399,7 @@ docs/
 * **Phase 8** — (опционально) RL-подход к автомасштабированию.
 
 
-## 10. Статус
+## 11. Статус
 
 Статус: **ранний research-прототип (MVP в разработке)**.
 
@@ -405,7 +413,7 @@ docs/
 Дальнейшие шаги и прогресс см. в `ROADMAP.md` и в разделе Issues/Projects репозитория (будет заведено по мере разработки).
 
 
-## 11. Обратная связь и вклад
+## 12. Обратная связь и вклад
 
 Пока проект делается как учебно-научный, но структура репозитория изначально ориентирована на открытый исходный код и возможность внешних вкладов.
 

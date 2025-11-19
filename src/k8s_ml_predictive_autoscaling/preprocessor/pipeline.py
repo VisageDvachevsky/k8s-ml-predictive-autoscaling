@@ -81,6 +81,7 @@ class PreprocessingPipeline:
             values=self.config.value_column,
         )
         pivot = pivot.sort_index()
+        self._ensure_required_metrics(pivot)
         return pivot
 
     def _resample(self, frame: pd.DataFrame) -> pd.DataFrame:
@@ -131,6 +132,17 @@ class PreprocessingPipeline:
             "test": frame.iloc[val_end:],
         }
         return splits
+
+    def _ensure_required_metrics(self, frame: pd.DataFrame) -> None:
+        missing = [metric for metric in self.config.metrics if metric not in frame.columns]
+        if not missing:
+            return
+        msg = (
+            "Raw dataset is missing required metrics: "
+            f"{', '.join(missing)}. Ensure collector exports match "
+            "preprocessor.metrics or adjust the preprocessing config."
+        )
+        raise ValueError(msg)
 
     def _persist_splits(self, splits: dict[str, pd.DataFrame]) -> dict[str, Path]:
         self.config.output_dir.mkdir(parents=True, exist_ok=True)

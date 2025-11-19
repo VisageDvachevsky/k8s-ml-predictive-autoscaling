@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import random
+import secrets
 import time
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, Header, HTTPException, status
 from fastapi.responses import PlainTextResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel
@@ -25,15 +26,36 @@ class SyntheticWorkload(BaseModel):
 def create_app(settings: Settings) -> FastAPI:
     """Factory for the demo FastAPI application."""
 
+    if not settings.api_token:
+        msg = (
+            "AUTOSCALER_API_TOKEN must be configured to start the demo service. "
+            "Set it via environment variables or .env."
+        )
+        raise RuntimeError(msg)
+
     app = FastAPI(title=settings.service_name, version="0.1.0")
+    token_value = settings.api_token.get_secret_value()
 
     @app.get("/health", tags=["system"], status_code=status.HTTP_200_OK)
     def health() -> dict[str, str]:
         log_structured(LOGGER, "health", status="ok")
         return {"status": "ok"}
 
-    @app.post("/workload", tags=["workload"], status_code=status.HTTP_202_ACCEPTED)
-    def handle_workload(body: SyntheticWorkload) -> dict[str, str | int]:
+    @app.post(
+        "/workload",
+        tags=["workload"],
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    def handle_workload(
+        body: SyntheticWorkload,
+        api_key: str | None = Header(default=None, alias=settings.api_key_header),
+    ) -> dict[str, str | int]:
+        if not api_key or not secrets.compare_digest(api_key, token_value):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or missing API token",
+                headers={"WWW-Authenticate": "API-Key"},
+            )
         start = time.perf_counter()
         simulated_latency = max(random.gauss(body.cpu_hint, 0.01), 0.005)
         time.sleep(simulated_latency)

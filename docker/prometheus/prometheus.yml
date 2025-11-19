@@ -11,4 +11,3 @@ scrape_configs:
           - demo-service-a:8000
           - demo-service-b:8000
           - demo-service-c:8000
- EOF

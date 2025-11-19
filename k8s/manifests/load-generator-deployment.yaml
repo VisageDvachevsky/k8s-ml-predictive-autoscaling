@@ -20,8 +20,16 @@ spec:
     spec:
       containers:
         - name: load-generator
-          image: ghcr.io/visagedvachevsky/k8s-ml-predictive-autoscaling-demo:latest
+          image: ghcr.io/visagedvachevsky/k8s-ml-predictive-autoscaling-demo:0.1.0
           imagePullPolicy: IfNotPresent
+          env:
+            - name: AUTOSCALER_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: demo-service-credentials
+                  key: api-token
+            - name: AUTOSCALER_API_KEY_HEADER
+              value: X-API-Key
           args:
             - python
             - -m

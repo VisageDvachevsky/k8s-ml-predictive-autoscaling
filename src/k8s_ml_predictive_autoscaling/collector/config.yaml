@@ -1,7 +1,7 @@
 prometheus:
   base_url: http://localhost:9090
   timeout_seconds: 15
-  verify_ssl: false
+  verify_ssl: true  # Use trusted certificates; disable only in controlled environments
 
 collection:
   output_dir: data/raw
@@ -11,12 +11,12 @@ collection:
 
 metrics:
   - name: cpu_metrics
-    promql: rate(container_cpu_usage_seconds_total{namespace="predictive-autoscaling"}[5m])
+    promql: rate(container_cpu_usage_seconds_total{namespace="predictive-autoscaling"}[5m])  # Update selectors (namespace/job) to match your cluster or docker-compose setup
     output_prefix: cpu_metrics
     step: 30s
   - name: memory_metrics
-    promql: container_memory_working_set_bytes{namespace="predictive-autoscaling"}
+    promql: container_memory_working_set_bytes{namespace="predictive-autoscaling"}  # Adjust namespace/job selectors for your environment
     output_prefix: memory_metrics
   - name: request_rate
-    promql: rate(demo_service_requests_total{job="demo-services"}[1m])
+    promql: rate(demo_service_requests_total{job="demo-services"}[1m])  # Replace job label when running outside K8s
     output_prefix: request_rate

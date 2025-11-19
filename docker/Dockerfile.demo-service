@@ -10,8 +10,8 @@ RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}" && \
 
 WORKDIR /app
 COPY pyproject.toml README.md ./
-RUN poetry install --only main --no-root --no-ansi
 COPY src ./src
+RUN poetry install --only main --no-ansi
 
 USER appuser
 EXPOSE 8000

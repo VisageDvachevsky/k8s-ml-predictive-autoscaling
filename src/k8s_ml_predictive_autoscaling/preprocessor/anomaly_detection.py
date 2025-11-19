@@ -19,7 +19,10 @@ def filter_zscore(frame: pd.DataFrame, columns: list[str], threshold: float) -> 
 
     if not columns:
         return frame
-    subset = frame[columns]
+    present = [column for column in columns if column in frame.columns]
+    if not present:
+        return frame
+    subset = frame[present]
     std = subset.std(ddof=0).replace(0, 1.0)
     standardized = (subset - subset.mean()) / std
     standardized = standardized.fillna(0.0)

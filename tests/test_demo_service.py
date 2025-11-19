@@ -1,18 +1,27 @@
 """Smoke tests for the demo FastAPI application."""
 
+from __future__ import annotations
+
+import os
 from collections.abc import Callable
 from typing import Any
 
+import pytest
 from fastapi.routing import APIRoute
+from fastapi import HTTPException
 
-from k8s_ml_predictive_autoscaling.demo_service.app import create_app, get_settings
+os.environ.setdefault("AUTOSCALER_API_TOKEN", "unit-test-token")
 
-SETTINGS = get_settings()
-app = create_app(SETTINGS)
+from k8s_ml_predictive_autoscaling.demo_service.app import create_app  # noqa: E402
+from k8s_ml_predictive_autoscaling.demo_service.app import SyntheticWorkload  # noqa: E402
+from k8s_ml_predictive_autoscaling.settings import Settings  # noqa: E402
+
+SETTINGS = Settings(api_token="unit-test-token")
+APP = create_app(SETTINGS)
 
 
-def _get_endpoint(path: str) -> Callable[[], Any]:
-    for route in app.routes:
+def _get_endpoint(path: str) -> Callable[..., Any]:
+    for route in APP.routes:
         if isinstance(route, APIRoute) and route.path == path:
             return route.endpoint
     raise AssertionError(f"Route {path} not found")
@@ -29,3 +38,25 @@ def test_metrics_endpoint_exposes_prometheus_text() -> None:
     response = handler()
     assert response.status_code == 200
     assert "demo_service_requests_total" in response.body.decode()
+
+
+def test_workload_endpoint_requires_api_key() -> None:
+    handler = _get_endpoint("/workload")
+    with pytest.raises(HTTPException):
+        handler(SyntheticWorkload(payload_size=32, cpu_hint=0.05), api_key=None)
+
+
+def test_workload_endpoint_accepts_valid_api_key() -> None:
+    handler = _get_endpoint("/workload")
+    token = SETTINGS.api_token.get_secret_value()
+    response = handler(
+        SyntheticWorkload(payload_size=64, cpu_hint=0.05),
+        api_key=token,
+    )
+    assert response["status"] == "queued"
+
+
+def test_create_app_requires_token() -> None:
+    settings = Settings(api_token=None)
+    with pytest.raises(RuntimeError):
+        create_app(settings)
