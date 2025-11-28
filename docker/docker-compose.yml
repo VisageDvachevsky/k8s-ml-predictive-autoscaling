@@ -88,8 +88,9 @@ services:
         "--interval",
         "1.0",
         "--minutes",
-        "180",
+        "10080",  # 7 days (48h minimum recommended, 7d for extra safety)
       ]
+    restart: unless-stopped  # Auto-restart if crashes
     depends_on:
       - demo-service-a
       - demo-service-b
