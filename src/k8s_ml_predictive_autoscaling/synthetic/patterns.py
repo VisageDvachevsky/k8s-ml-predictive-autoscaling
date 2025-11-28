@@ -155,7 +155,6 @@ def _calculate_hourly_factor(hour: float, config: PatternConfig) -> float:
         return config.peak_multiplier * 0.85 * (1 - progress * 0.7)
 
 
-
 def windowed(values: Sequence[float], size: int) -> Iterable[list[float]]:
     """Yield sliding windows from the generated profile."""
 
