@@ -3,12 +3,13 @@
 Exploratory Data Analysis for collected metrics data.
 Analyzes patterns, seasonality, statistics, and creates visualizations.
 """
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from pathlib import Path
 import json
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 
 # Set style
 sns.set_theme(style="darkgrid")

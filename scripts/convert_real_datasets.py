@@ -3,9 +3,10 @@
 Convert REAL public datasets (Alibaba, Azure) to project format.
 Uses actual loaded data from datacentertracesdatasets package.
 """
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from pathlib import Path
 
 
 def synthesize_request_rate_v2(cpu_util: pd.Series, base_rps: float = 100.0) -> pd.Series:

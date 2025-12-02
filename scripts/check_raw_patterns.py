@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Check if raw data has realistic patterns."""
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import glob
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 sns.set_theme(style="darkgrid")
 
