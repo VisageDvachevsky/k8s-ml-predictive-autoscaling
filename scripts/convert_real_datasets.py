@@ -54,12 +54,12 @@ def synthesize_latency_v2(request_rate: pd.Series, cpu_util: pd.Series) -> dict:
     # P95: more sensitive to queue depth
     base_p95 = 0.05 + 0.1 * rr_norm + 0.05 * cpu_norm  # 50-200ms
     noise_p95 = np.random.lognormal(0, 0.25, len(request_rate))
-    latency_p95 = base_p95 * queue_factor ** 1.5 * noise_p95
+    latency_p95 = base_p95 * queue_factor**1.5 * noise_p95
 
     # P99: tail latency, very sensitive
     base_p99 = 0.1 + 0.2 * rr_norm + 0.15 * cpu_norm  # 100-500ms
     noise_p99 = np.random.lognormal(0, 0.35, len(request_rate))
-    latency_p99 = base_p99 * queue_factor ** 2 * noise_p99
+    latency_p99 = base_p99 * queue_factor**2 * noise_p99
 
     # Ensure ordering and realistic bounds
     latency_p50 = np.clip(latency_p50, 0.01, 1.0)  # 10ms - 1s
@@ -76,37 +76,42 @@ def synthesize_latency_v2(request_rate: pd.Series, cpu_util: pd.Series) -> dict:
 def convert_alibaba_to_project_format(file_path: Path) -> pd.DataFrame:
     """Convert Alibaba dataset to project format."""
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CONVERTING ALIBABA 2018 DATASET")
-    print("="*70)
+    print("=" * 70)
 
     df = pd.read_csv(file_path)
     print(f"Loaded: {len(df)} samples")
 
     # Create timestamps (5-minute intervals)
-    start_time = pd.Timestamp('2018-01-01 00:00:00')
-    df['timestamp'] = pd.date_range(start=start_time, periods=len(df), freq='5min')
+    start_time = pd.Timestamp("2018-01-01 00:00:00")
+    df["timestamp"] = pd.date_range(start=start_time, periods=len(df), freq="5min")
 
     # Synthesize metrics
     print("Synthesizing request_rate from CPU...")
-    df['request_rate'] = synthesize_request_rate_v2(df['cpu_util_percent'], base_rps=150.0)
+    df["request_rate"] = synthesize_request_rate_v2(df["cpu_util_percent"], base_rps=150.0)
 
     print("Synthesizing latency percentiles...")
-    latency = synthesize_latency_v2(df['request_rate'], df['cpu_util_percent'])
-    df['latency_p50'] = latency['latency_p50']
-    df['latency_p95'] = latency['latency_p95']
-    df['latency_p99'] = latency['latency_p99']
+    latency = synthesize_latency_v2(df["request_rate"], df["cpu_util_percent"])
+    df["latency_p50"] = latency["latency_p50"]
+    df["latency_p95"] = latency["latency_p95"]
+    df["latency_p99"] = latency["latency_p99"]
 
     # Active jobs from CPU + memory
-    df['active_jobs'] = np.round(
-        (df['cpu_util_percent'] / 100.0 * 30) +
-        (df['mem_util_percent'] / 100.0 * 20) +
-        np.random.randint(-3, 3, len(df))
-    ).clip(lower=0).astype(int)
+    df["active_jobs"] = (
+        np.round(
+            (df["cpu_util_percent"] / 100.0 * 30)
+            + (df["mem_util_percent"] / 100.0 * 20)
+            + np.random.randint(-3, 3, len(df))
+        )
+        .clip(lower=0)
+        .astype(int)
+    )
 
     # Select columns
-    result = df[['timestamp', 'request_rate', 'latency_p50', 'latency_p95',
-                 'latency_p99', 'active_jobs']].copy()
+    result = df[
+        ["timestamp", "request_rate", "latency_p50", "latency_p95", "latency_p99", "active_jobs"]
+    ].copy()
 
     print_statistics(result, "ALIBABA")
 
@@ -116,45 +121,52 @@ def convert_alibaba_to_project_format(file_path: Path) -> pd.DataFrame:
 def convert_azure_to_project_format(file_path: Path) -> pd.DataFrame:
     """Convert Azure dataset to project format."""
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CONVERTING AZURE V2 DATASET")
-    print("="*70)
+    print("=" * 70)
 
     df = pd.read_csv(file_path)
     print(f"Loaded: {len(df)} samples")
 
     # Normalize CPU (convert from absolute to percentage)
-    cpu_min, cpu_max = df['cpu_usage'].min(), df['cpu_usage'].max()
-    df['cpu_util_percent'] = ((df['cpu_usage'] - cpu_min) / (cpu_max - cpu_min) * 100).clip(0, 100)
+    cpu_min, cpu_max = df["cpu_usage"].min(), df["cpu_usage"].max()
+    df["cpu_util_percent"] = ((df["cpu_usage"] - cpu_min) / (cpu_max - cpu_min) * 100).clip(0, 100)
 
     # Normalize memory
-    mem_min, mem_max = df['assigned_mem'].min(), df['assigned_mem'].max()
-    df['mem_util_percent'] = ((df['assigned_mem'] - mem_min) / (mem_max - mem_min) * 100).clip(0, 100)
+    mem_min, mem_max = df["assigned_mem"].min(), df["assigned_mem"].max()
+    df["mem_util_percent"] = ((df["assigned_mem"] - mem_min) / (mem_max - mem_min) * 100).clip(
+        0, 100
+    )
 
     # Create timestamps (5-minute intervals)
-    start_time = pd.Timestamp('2019-01-01 00:00:00')
-    df['timestamp'] = pd.date_range(start=start_time, periods=len(df), freq='5min')
+    start_time = pd.Timestamp("2019-01-01 00:00:00")
+    df["timestamp"] = pd.date_range(start=start_time, periods=len(df), freq="5min")
 
     # Synthesize metrics
     print("Synthesizing request_rate from CPU...")
-    df['request_rate'] = synthesize_request_rate_v2(df['cpu_util_percent'], base_rps=120.0)
+    df["request_rate"] = synthesize_request_rate_v2(df["cpu_util_percent"], base_rps=120.0)
 
     print("Synthesizing latency percentiles...")
-    latency = synthesize_latency_v2(df['request_rate'], df['cpu_util_percent'])
-    df['latency_p50'] = latency['latency_p50']
-    df['latency_p95'] = latency['latency_p95']
-    df['latency_p99'] = latency['latency_p99']
+    latency = synthesize_latency_v2(df["request_rate"], df["cpu_util_percent"])
+    df["latency_p50"] = latency["latency_p50"]
+    df["latency_p95"] = latency["latency_p95"]
+    df["latency_p99"] = latency["latency_p99"]
 
     # Active jobs
-    df['active_jobs'] = np.round(
-        (df['cpu_util_percent'] / 100.0 * 25) +
-        (df['mem_util_percent'] / 100.0 * 15) +
-        np.random.randint(-2, 2, len(df))
-    ).clip(lower=0).astype(int)
+    df["active_jobs"] = (
+        np.round(
+            (df["cpu_util_percent"] / 100.0 * 25)
+            + (df["mem_util_percent"] / 100.0 * 15)
+            + np.random.randint(-2, 2, len(df))
+        )
+        .clip(lower=0)
+        .astype(int)
+    )
 
     # Select columns
-    result = df[['timestamp', 'request_rate', 'latency_p50', 'latency_p95',
-                 'latency_p99', 'active_jobs']].copy()
+    result = df[
+        ["timestamp", "request_rate", "latency_p50", "latency_p95", "latency_p99", "active_jobs"]
+    ].copy()
 
     print_statistics(result, "AZURE")
 
@@ -184,73 +196,75 @@ def save_as_prometheus_format(df: pd.DataFrame, output_dir: Path, prefix: str):
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Group by date
-    df['date'] = df['timestamp'].dt.date
+    df["date"] = df["timestamp"].dt.date
 
-    metrics = ['request_rate', 'latency_p50', 'latency_p95', 'latency_p99', 'active_jobs']
+    metrics = ["request_rate", "latency_p50", "latency_p95", "latency_p99", "active_jobs"]
 
     for metric in metrics:
-        for date, group in df.groupby('date'):
+        for date, group in df.groupby("date"):
             filename = output_dir / f"{metric}_{date.strftime('%Y%m%d')}.csv"
 
-            prom_df = pd.DataFrame({
-                'timestamp': group['timestamp'],
-                'metric': metric,
-                'promql': f'{metric}{{job="demo-services"}}',
-                'value': group[metric],
-                'labels': '{"job": "demo-services", "source": "real-traces"}',
-            })
+            prom_df = pd.DataFrame(
+                {
+                    "timestamp": group["timestamp"],
+                    "metric": metric,
+                    "promql": f'{metric}{{job="demo-services"}}',
+                    "value": group[metric],
+                    "labels": '{"job": "demo-services", "source": "real-traces"}',
+                }
+            )
 
             prom_df.to_csv(filename, index=False)
             print(f"  Saved: {filename} ({len(prom_df)} samples)")
 
 
 def main():
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("REAL DATASET CONVERTER")
-    print("="*70)
+    print("=" * 70)
 
     # Convert Alibaba
-    alibaba_file = Path('data/external/alibaba_2018_real.csv')
+    alibaba_file = Path("data/external/alibaba_2018_real.csv")
     if alibaba_file.exists():
         alibaba_df = convert_alibaba_to_project_format(alibaba_file)
-        save_as_prometheus_format(alibaba_df, Path('data/raw_alibaba'), 'alibaba')
+        save_as_prometheus_format(alibaba_df, Path("data/raw_alibaba"), "alibaba")
     else:
         print(f"\n⚠️  Alibaba file not found: {alibaba_file}")
         alibaba_df = None
 
     # Convert Azure
-    azure_file = Path('data/external/azure_v2_real.csv')
+    azure_file = Path("data/external/azure_v2_real.csv")
     if azure_file.exists():
         azure_df = convert_azure_to_project_format(azure_file)
-        save_as_prometheus_format(azure_df, Path('data/raw_azure'), 'azure')
+        save_as_prometheus_format(azure_df, Path("data/raw_azure"), "azure")
     else:
         print(f"\n⚠️  Azure file not found: {azure_file}")
         azure_df = None
 
     # Combine if both available
     if alibaba_df is not None and azure_df is not None:
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("COMBINING DATASETS")
-        print("="*70)
+        print("=" * 70)
 
         combined = pd.concat([alibaba_df, azure_df], ignore_index=True)
-        combined = combined.sort_values('timestamp').reset_index(drop=True)
+        combined = combined.sort_values("timestamp").reset_index(drop=True)
 
         print(f"Combined samples: {len(combined)}")
         print(f"Date range: {combined['timestamp'].min()} to {combined['timestamp'].max()}")
 
-        save_as_prometheus_format(combined, Path('data/raw'), 'combined')
+        save_as_prometheus_format(combined, Path("data/raw"), "combined")
 
         print("\n✅ COMBINED dataset saved to: data/raw/")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CONVERSION COMPLETE!")
-    print("="*70)
+    print("=" * 70)
     print("\nNext steps:")
     print("  1. Check data: ls -lh data/raw*/")
     print("  2. Run preprocessing: python -m k8s_ml_predictive_autoscaling.preprocessor.pipeline")
     print("  3. Compare with synthetic: python scripts/check_raw_patterns.py")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
 
 if __name__ == "__main__":

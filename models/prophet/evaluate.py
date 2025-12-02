@@ -27,21 +27,21 @@ def load_model(model_path: Path):
 def load_test_data(data_path: Path, target_col: str) -> pd.DataFrame:
     """Load test data."""
     print(f"Loading test data from {data_path}...")
-    df = pd.read_csv(data_path, parse_dates=['timestamp'])
+    df = pd.read_csv(data_path, parse_dates=["timestamp"])
     print(f"Loaded {len(df):,} samples")
 
+    # Remove timezone for Prophet compatibility
+    timestamps = pd.to_datetime(df["timestamp"]).dt.tz_localize(None)
+
     # Prepare Prophet format
-    prophet_df = pd.DataFrame({
-        'ds': df['timestamp'],
-        'y': df[target_col]
-    })
+    prophet_df = pd.DataFrame({"ds": timestamps, "y": df[target_col]})
     return prophet_df
 
 
 def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
     """Calculate forecasting metrics."""
     mse = ((y_true - y_pred) ** 2).mean()
-    rmse = mse ** 0.5
+    rmse = mse**0.5
     mae = abs(y_true - y_pred).mean()
 
     # MAPE with epsilon to avoid division by zero
@@ -53,11 +53,11 @@ def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict:
     r2 = 1 - (ss_res / (ss_tot + 1e-8))
 
     return {
-        'rmse': float(rmse),
-        'mae': float(mae),
-        'mape': float(mape),
-        'r2': float(r2),
-        'mse': float(mse),
+        "rmse": float(rmse),
+        "mae": float(mae),
+        "mape": float(mape),
+        "r2": float(r2),
+        "mse": float(mse),
     }
 
 
@@ -74,25 +74,33 @@ def create_visualizations(
     fig, axes = plt.subplots(2, 1, figsize=(15, 10))
 
     # Full time series
-    axes[0].plot(timestamps, y_true, label='Actual', alpha=0.7, linewidth=1)
-    axes[0].plot(timestamps, y_pred, label='Predicted', alpha=0.7, linewidth=1)
-    axes[0].set_title('Prophet Predictions vs Actual (Full Test Set)', fontsize=14, fontweight='bold')
-    axes[0].set_ylabel('Value (normalized)')
+    axes[0].plot(timestamps, y_true, label="Actual", alpha=0.7, linewidth=1)
+    axes[0].plot(timestamps, y_pred, label="Predicted", alpha=0.7, linewidth=1)
+    axes[0].set_title(
+        "Prophet Predictions vs Actual (Full Test Set)", fontsize=14, fontweight="bold"
+    )
+    axes[0].set_ylabel("Value (normalized)")
     axes[0].legend()
     axes[0].grid(True, alpha=0.3)
 
     # Zoomed view (first 500 points)
     zoom_size = min(500, len(y_true))
-    axes[1].plot(timestamps[:zoom_size], y_true[:zoom_size], label='Actual', alpha=0.7, linewidth=1.5)
-    axes[1].plot(timestamps[:zoom_size], y_pred[:zoom_size], label='Predicted', alpha=0.7, linewidth=1.5)
-    axes[1].set_title(f'Prophet Predictions vs Actual (First {zoom_size} points)', fontsize=14, fontweight='bold')
-    axes[1].set_xlabel('Time')
-    axes[1].set_ylabel('Value (normalized)')
+    axes[1].plot(
+        timestamps[:zoom_size], y_true[:zoom_size], label="Actual", alpha=0.7, linewidth=1.5
+    )
+    axes[1].plot(
+        timestamps[:zoom_size], y_pred[:zoom_size], label="Predicted", alpha=0.7, linewidth=1.5
+    )
+    axes[1].set_title(
+        f"Prophet Predictions vs Actual (First {zoom_size} points)", fontsize=14, fontweight="bold"
+    )
+    axes[1].set_xlabel("Time")
+    axes[1].set_ylabel("Value (normalized)")
     axes[1].legend()
     axes[1].grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig(output_dir / 'predictions_vs_actual.png', dpi=150, bbox_inches='tight')
+    plt.savefig(output_dir / "predictions_vs_actual.png", dpi=150, bbox_inches="tight")
     print(f"✓ Saved: {output_dir / 'predictions_vs_actual.png'}")
     plt.close()
 
@@ -100,22 +108,23 @@ def create_visualizations(
     errors = y_true - y_pred
     fig, axes = plt.subplots(1, 2, figsize=(15, 5))
 
-    axes[0].hist(errors, bins=50, edgecolor='black', alpha=0.7)
-    axes[0].axvline(0, color='red', linestyle='--', linewidth=2, label='Zero error')
-    axes[0].set_title('Prediction Error Distribution', fontsize=14, fontweight='bold')
-    axes[0].set_xlabel('Error (Actual - Predicted)')
-    axes[0].set_ylabel('Frequency')
+    axes[0].hist(errors, bins=50, edgecolor="black", alpha=0.7)
+    axes[0].axvline(0, color="red", linestyle="--", linewidth=2, label="Zero error")
+    axes[0].set_title("Prediction Error Distribution", fontsize=14, fontweight="bold")
+    axes[0].set_xlabel("Error (Actual - Predicted)")
+    axes[0].set_ylabel("Frequency")
     axes[0].legend()
-    axes[0].grid(True, alpha=0.3, axis='y')
+    axes[0].grid(True, alpha=0.3, axis="y")
 
     # Q-Q plot for normality check
     from scipy import stats
+
     stats.probplot(errors, dist="norm", plot=axes[1])
-    axes[1].set_title('Q-Q Plot (Error Normality Check)', fontsize=14, fontweight='bold')
+    axes[1].set_title("Q-Q Plot (Error Normality Check)", fontsize=14, fontweight="bold")
     axes[1].grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig(output_dir / 'error_analysis.png', dpi=150, bbox_inches='tight')
+    plt.savefig(output_dir / "error_analysis.png", dpi=150, bbox_inches="tight")
     print(f"✓ Saved: {output_dir / 'error_analysis.png'}")
     plt.close()
 
@@ -125,16 +134,16 @@ def create_visualizations(
 
     # Perfect prediction line
     min_val, max_val = min(y_true.min(), y_pred.min()), max(y_true.max(), y_pred.max())
-    ax.plot([min_val, max_val], [min_val, max_val], 'r--', linewidth=2, label='Perfect prediction')
+    ax.plot([min_val, max_val], [min_val, max_val], "r--", linewidth=2, label="Perfect prediction")
 
-    ax.set_xlabel('Actual', fontsize=12)
-    ax.set_ylabel('Predicted', fontsize=12)
-    ax.set_title('Predicted vs Actual Scatter Plot', fontsize=14, fontweight='bold')
+    ax.set_xlabel("Actual", fontsize=12)
+    ax.set_ylabel("Predicted", fontsize=12)
+    ax.set_title("Predicted vs Actual Scatter Plot", fontsize=14, fontweight="bold")
     ax.legend()
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig(output_dir / 'scatter_plot.png', dpi=150, bbox_inches='tight')
+    plt.savefig(output_dir / "scatter_plot.png", dpi=150, bbox_inches="tight")
     print(f"✓ Saved: {output_dir / 'scatter_plot.png'}")
     plt.close()
 
@@ -167,9 +176,9 @@ def main():
 
     args = parser.parse_args()
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("PROPHET MODEL EVALUATION")
-    print("="*70)
+    print("=" * 70)
 
     # Load model and data
     model = load_model(args.model_path)
@@ -179,53 +188,53 @@ def main():
     print("\nGenerating predictions...")
     forecast = model.predict(test_df)
 
-    y_true = test_df['y'].values
-    y_pred = forecast['yhat'].values
-    timestamps = test_df['ds']
+    y_true = test_df["y"].values
+    y_pred = forecast["yhat"].values
+    timestamps = test_df["ds"]
 
     print(f"✓ Generated {len(y_pred):,} predictions")
 
     # Calculate metrics
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST SET METRICS")
-    print("="*70)
+    print("=" * 70)
     metrics = calculate_metrics(y_true, y_pred)
 
     for metric_name, value in metrics.items():
-        if metric_name == 'mape':
+        if metric_name == "mape":
             print(f"{metric_name.upper()}: {value:.2f}%")
         else:
             print(f"{metric_name.upper()}: {value:.4f}")
 
     # Create visualizations
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CREATING VISUALIZATIONS")
-    print("="*70)
+    print("=" * 70)
     create_visualizations(y_true, y_pred, timestamps, args.output_dir)
 
     # Save results
     results = {
-        'model_type': 'prophet',
-        'test_metrics': metrics,
-        'test_samples': len(y_true),
-        'target_column': args.target,
+        "model_type": "prophet",
+        "test_metrics": metrics,
+        "test_samples": len(y_true),
+        "target_column": args.target,
     }
 
-    results_path = args.output_dir / 'test_results.json'
+    results_path = args.output_dir / "test_results.json"
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    with open(results_path, 'w') as f:
+    with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
     print(f"\n✓ Results saved to: {results_path}")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("EVALUATION COMPLETE!")
-    print("="*70)
+    print("=" * 70)
     print(f"\nResults directory: {args.output_dir}")
     print(f"  - test_results.json")
     print(f"  - predictions_vs_actual.png")
     print(f"  - error_analysis.png")
     print(f"  - scatter_plot.png")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
 
 if __name__ == "__main__":

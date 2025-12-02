@@ -60,7 +60,9 @@ def download_with_progress(url: str, target: Path) -> None:
     def report_hook(block_num, block_size, total_size):
         if total_size > 0:
             percent = min(block_num * block_size / total_size * 100, 100)
-            sys.stdout.write(f"\r  Progress: {percent:.1f}% ({block_num * block_size / 1024 / 1024:.1f} MB)")
+            sys.stdout.write(
+                f"\r  Progress: {percent:.1f}% ({block_num * block_size / 1024 / 1024:.1f} MB)"
+            )
             sys.stdout.flush()
 
     print(f"Downloading: {url}")
@@ -125,13 +127,11 @@ def main():
         print(FULL_DATASETS_INFO)
         return
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("PUBLIC DATASET DOWNLOADER")
-    print("="*70)
+    print("=" * 70)
 
-    datasets_to_download = (
-        list(DATASETS.keys()) if args.dataset == "all" else [args.dataset]
-    )
+    datasets_to_download = list(DATASETS.keys()) if args.dataset == "all" else [args.dataset]
 
     downloaded = []
     failed = []
@@ -143,9 +143,9 @@ def main():
         except Exception as e:
             failed.append((dataset_key, str(e)))
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DOWNLOAD SUMMARY")
-    print("="*70)
+    print("=" * 70)
 
     if downloaded:
         print(f"\n✓ Successfully downloaded ({len(downloaded)}):")
@@ -158,14 +158,14 @@ def main():
         for key, error in failed:
             print(f"  - {key}: {error}")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("NEXT STEPS:")
-    print("="*70)
+    print("=" * 70)
     print("1. Run converter: python scripts/convert_datasets.py")
     print("2. Check converted data: ls -lh data/processed/")
     print("3. Train models: python -m k8s_ml_predictive_autoscaling.predictor.train")
     print("\nFor FULL datasets, see: python scripts/download_datasets.py --info")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
 
 if __name__ == "__main__":

@@ -15,24 +15,24 @@ from prophet import Prophet
 def load_data(data_path: Path) -> pd.DataFrame:
     """Load preprocessed training data."""
     print(f"Loading data from {data_path}...")
-    df = pd.read_csv(data_path, parse_dates=['timestamp'])
+    df = pd.read_csv(data_path, parse_dates=["timestamp"])
     print(f"Loaded {len(df):,} samples")
     print(f"Date range: {df['timestamp'].min()} to {df['timestamp'].max()}")
     return df
 
 
-def prepare_prophet_data(df: pd.DataFrame, target_col: str = 'request_rate') -> pd.DataFrame:
+def prepare_prophet_data(df: pd.DataFrame, target_col: str = "request_rate") -> pd.DataFrame:
     """Convert to Prophet format (ds, y)."""
-    prophet_df = pd.DataFrame({
-        'ds': df['timestamp'],
-        'y': df[target_col]
-    })
+    # Remove timezone for Prophet compatibility
+    timestamps = pd.to_datetime(df["timestamp"]).dt.tz_localize(None)
+
+    prophet_df = pd.DataFrame({"ds": timestamps, "y": df[target_col]})
     return prophet_df
 
 
 def train_prophet_model(
     df: pd.DataFrame,
-    seasonality_mode: str = 'multiplicative',
+    seasonality_mode: str = "multiplicative",
     changepoint_prior_scale: float = 0.05,
     seasonality_prior_scale: float = 10.0,
 ) -> Prophet:
@@ -44,9 +44,9 @@ def train_prophet_model(
         changepoint_prior_scale: Flexibility of trend (0.001-0.5)
         seasonality_prior_scale: Strength of seasonality (0.01-10)
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TRAINING PROPHET MODEL")
-    print("="*70)
+    print("=" * 70)
     print(f"Seasonality mode: {seasonality_mode}")
     print(f"Changepoint prior scale: {changepoint_prior_scale}")
     print(f"Seasonality prior scale: {seasonality_prior_scale}")
@@ -71,32 +71,34 @@ def train_prophet_model(
     return model
 
 
-def evaluate_on_validation(model: Prophet, val_path: Path, target_col: str = 'request_rate') -> dict:
+def evaluate_on_validation(
+    model: Prophet, val_path: Path, target_col: str = "request_rate"
+) -> dict:
     """Quick evaluation on validation set."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("VALIDATION EVALUATION")
-    print("="*70)
+    print("=" * 70)
 
-    val_df = pd.read_csv(val_path, parse_dates=['timestamp'])
+    val_df = pd.read_csv(val_path, parse_dates=["timestamp"])
     prophet_val = prepare_prophet_data(val_df, target_col)
 
     # Predict
     forecast = model.predict(prophet_val)
 
     # Calculate metrics
-    y_true = prophet_val['y'].values
-    y_pred = forecast['yhat'].values
+    y_true = prophet_val["y"].values
+    y_pred = forecast["yhat"].values
 
     mse = ((y_true - y_pred) ** 2).mean()
-    rmse = mse ** 0.5
+    rmse = mse**0.5
     mae = abs(y_true - y_pred).mean()
     mape = (abs((y_true - y_pred) / (y_true + 1e-8))).mean() * 100
 
     metrics = {
-        'rmse': float(rmse),
-        'mae': float(mae),
-        'mape': float(mape),
-        'samples': len(y_true),
+        "rmse": float(rmse),
+        "mae": float(mae),
+        "mape": float(mape),
+        "samples": len(y_true),
     }
 
     print(f"RMSE: {rmse:.4f}")
@@ -133,8 +135,8 @@ def main():
     )
     parser.add_argument(
         "--seasonality-mode",
-        choices=['additive', 'multiplicative'],
-        default='multiplicative',
+        choices=["additive", "multiplicative"],
+        default="multiplicative",
         help="Seasonality mode",
     )
     parser.add_argument(
@@ -152,9 +154,9 @@ def main():
 
     args = parser.parse_args()
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("PROPHET MODEL TRAINING")
-    print("="*70)
+    print("=" * 70)
 
     # Load data
     train_df = load_data(args.train_data)
@@ -175,33 +177,37 @@ def main():
     args.output_dir.mkdir(parents=True, exist_ok=True)
     model_path = args.output_dir / "prophet_model.pkl"
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("SAVING MODEL")
-    print("="*70)
+    print("=" * 70)
     joblib.dump(model, model_path)
     print(f"✓ Model saved to: {model_path}")
 
     # Save metrics
     metrics_path = args.output_dir / "metrics.json"
-    with open(metrics_path, 'w') as f:
-        json.dump({
-            'validation_metrics': val_metrics,
-            'hyperparameters': {
-                'seasonality_mode': args.seasonality_mode,
-                'changepoint_prior_scale': args.changepoint_prior,
-                'seasonality_prior_scale': args.seasonality_prior,
+    with open(metrics_path, "w") as f:
+        json.dump(
+            {
+                "validation_metrics": val_metrics,
+                "hyperparameters": {
+                    "seasonality_mode": args.seasonality_mode,
+                    "changepoint_prior_scale": args.changepoint_prior,
+                    "seasonality_prior_scale": args.seasonality_prior,
+                },
+                "target_column": args.target,
             },
-            'target_column': args.target,
-        }, f, indent=2)
+            f,
+            indent=2,
+        )
     print(f"✓ Metrics saved to: {metrics_path}")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TRAINING COMPLETE!")
-    print("="*70)
+    print("=" * 70)
     print(f"\nNext steps:")
     print(f"  1. Evaluate on test: python models/prophet/evaluate.py")
     print(f"  2. View results: cat {metrics_path}")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
 
 if __name__ == "__main__":
